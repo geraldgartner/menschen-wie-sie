@@ -34,22 +34,22 @@ for(g in dimnames(wobinich)$GESCH) {
   for(a in dimnames(wobinich)$ALTER) {
     for(b in dimnames(wobinich)$BLD) {
       for(s in dimnames(wobinich)$SOZST) {
-
+        
         tmp<-lst2013
-
+        
         if(g!='X') tmp<-filter(tmp, dem.gender==g)
         if(a!='X') tmp<-filter(tmp, dem.age==a)
         if(b!='X') tmp<-filter(tmp, dem.region==b)
         if(s!='X') tmp<-filter(tmp, dem.sozst==s)
-
+        
         obs[1,g,a,b,s]<-nrow(tmp)
-
+        
         wobinich[,g,a,b,s,1]<-quantile(tmp$kz210,seq(0.01,0.99,0.01))
         wobinich[,g,a,b,s,2]<-Hmisc::wtd.quantile(tmp$kz210,probs=seq(0.01,0.99,0.01),weights=tmp$SamplingWeight)
-
+        
         #fit<-vglm(inc.p.emp.adm~1,sinmad(lss=FALSE), data=tmp,trace = TRUE)
         #wobinich[,g,a,e,l,3]<-qsinmad(seq(0.01,0.99,0.01), scale=Coef(fit)[2],shape1.a=Coef(fit)[1] ,shape3.q=Coef(fit)[3])
-
+        
       }
     }
   }
@@ -86,6 +86,7 @@ library(formatR)
 library(scales)
 library(grid)
 library(extrafont)
+library(animation)
 
 #Unser Style
 
@@ -108,12 +109,54 @@ theme <- theme(plot.background = element_rect(fill = "gray97"), panel.grid.major
 woent <- as.data.frame.table(wobinich)
 i <- sapply(woent, is.factor)
 woent[i] <- lapply(woent[i], as.character)
+woent$PERZ <- as.numeric(woent$PERZ)
+wogew <- dplyr::filter(woent, TYPE=="Gew")
 
 alle <- dplyr::filter(woent, GESCH == "X", ALTER == "X", BLD == "X", SOZST == "X", TYPE=="Gew")
 
+options(scipen = 999)
+
+
+wogewbdl <- filter(wogew, SOZST == "X") # Filter für alle außer Sozst
+wogewsoz <- filter(wogew, BLD =="X") #FILTER FÜR ALLE AUSSER BUNDESLÄNDER
+wogewalter<-filter(wogew, BLD =="X", SOZST=="X", GESCH=="X") #FACET FÜR ALTER ANSEHEN
+wogewsozalter<-filter(wogew, BLD =="X", SOZST=="X", GESCH=="X") #FACET FÜR ALTER ANSEHEN
+
+#Alle Verteilungen nach Alter
+g <- ggplot(wogewalter, aes(x= PERZ, y = Freq)) +
+  geom_bar(stat="identity") +
+  facet_wrap(~ ALTER)+
+  theme#(strip.background = element_blank(),
+#strip.text.x = element_blank())
+g
+
+#Alle Verteilungen nach Sozstell
+g <- ggplot(wogewalter, aes(x= PERZ, y = Freq)) +
+  geom_bar(stat="identity") +
+  facet_wrap(~ ALTER)+
+  theme#(strip.background = element_blank(),
+#strip.text.x = element_blank())
+g
+
+g <- ggplot(alle, aes(PERZ, Freq)) +
+  geom_bar(stat = "identity") +
+  theme
+g
 
 
 
+#Create folder for animation
+ani.options(outdir = paste(getwd(), "/images", sep=""))
 
+#all distributions
+
+trace.animate <- function() {
+  lapply(seq(-3,3,.2), function(i) {
+    draw.curve(i)
+  })
+}
+
+#save all iterations into one GIF
+saveGIF(trace.animate(), interval = .2, movie.name="trace.gif")
 
 
