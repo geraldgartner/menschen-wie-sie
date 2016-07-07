@@ -128,7 +128,7 @@ wogewalle <- filter(wogew, BLD =="X", ALTER == "X", SOZST=="X", GESCH=="X")
 #Alle Verteilungen nach Alter
 g <- ggplot(wogewalter, aes(x= PERZ, y = Freq)) +
   geom_bar(stat="identity") +
-  facet_wrap(~ ALTER)+
+  facet_wrap(~ ALTER, ncol=3)+
   theme#(strip.background = element_blank(),
 #strip.text.x = element_blank())
 ggsave(g, file="einkommensverteilungnachalter.pdf")
@@ -160,27 +160,3 @@ ge <- ggplot(wogewgesch, aes(x= PERZ, y = Freq)) +
 #strip.text.x = element_blank())
 ge
 ggsave(ge, file="einkommennachgesch.pdf")
-
-
-g <- ggplot(alle, aes(PERZ, Freq)) +
-  geom_bar(stat = "identity") +
-  theme
-g
-
-
-
-#Create folder for animation
-ani.options(outdir = paste(getwd(), "/images", sep=""))
-
-#all distributions
-
-trace.animate <- function() {
-  lapply(seq(-3,3,.2), function(i) {
-    draw.curve(i)
-  })
-}
-
-#save all iterations into one GIF
-saveGIF(trace.animate(), interval = .2, movie.name="trace.gif")
-
-
