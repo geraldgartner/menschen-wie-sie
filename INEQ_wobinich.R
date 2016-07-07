@@ -120,7 +120,10 @@ options(scipen = 999)
 wogewbdl <- filter(wogew, SOZST == "X") # Filter für alle außer Sozst
 wogewsoz <- filter(wogew, BLD =="X") #FILTER FÜR ALLE AUSSER BUNDESLÄNDER
 wogewalter<-filter(wogew, BLD =="X", SOZST=="X", GESCH=="X") #FACET FÜR ALTER ANSEHEN
-wogewsozalter<-filter(wogew, BLD =="X", SOZST=="X", GESCH=="X") #FACET FÜR ALTER ANSEHEN
+wogewsozalter<-filter(wogew, BLD =="X", GESCH=="X", ALTER == "X") #FACET FÜR ALTER ANSEHEN
+wogewbdl <- filter(wogew, GESCH=="X", ALTER == "X", SOZST=="X") #FACET FÜR BDL ANSEHEN
+wogewgesch <- filter(wogew, BLD =="X", ALTER == "X", SOZST=="X") #FACET FÜR GESCHLECHT ANSEHEN
+wogewalle <- filter(wogew, BLD =="X", ALTER == "X", SOZST=="X", GESCH=="X")
 
 #Alle Verteilungen nach Alter
 g <- ggplot(wogewalter, aes(x= PERZ, y = Freq)) +
@@ -128,15 +131,36 @@ g <- ggplot(wogewalter, aes(x= PERZ, y = Freq)) +
   facet_wrap(~ ALTER)+
   theme#(strip.background = element_blank(),
 #strip.text.x = element_blank())
-g
+ggsave(g, file="einkommensverteilungnachalter.pdf")
 
 #Alle Verteilungen nach Sozstell
-g <- ggplot(wogewalter, aes(x= PERZ, y = Freq)) +
+s <- ggplot(wogewsozalter, aes(x= PERZ, y = Freq)) +
   geom_bar(stat="identity") +
-  facet_wrap(~ ALTER)+
+  facet_wrap(~ SOZST)+
   theme#(strip.background = element_blank(),
 #strip.text.x = element_blank())
-g
+s
+ggsave(s, file="einkommennachsozstellung.pdf")
+
+#Alle Verteilungen nach Bundesland
+b <- ggplot(wogewbdl, aes(x= PERZ, y = Freq)) +
+  geom_bar(stat="identity") +
+  facet_wrap(~ BLD)+
+  theme#(strip.background = element_blank(),
+#strip.text.x = element_blank())
+b
+ggsave(b, file="einkommennachbdl.pdf")
+
+#Alle Verteilungen nach Geschlecht
+ge <- ggplot(wogewgesch, aes(x= PERZ, y = Freq)) +
+  geom_bar(stat="identity") +
+  facet_wrap(~ GESCH)+
+  ylim(0,150000)+
+  theme#(strip.background = element_blank(),
+#strip.text.x = element_blank())
+ge
+ggsave(ge, file="einkommennachgesch.pdf")
+
 
 g <- ggplot(alle, aes(PERZ, Freq)) +
   geom_bar(stat = "identity") +
