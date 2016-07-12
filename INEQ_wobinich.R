@@ -160,3 +160,18 @@ ge <- ggplot(wogewgesch, aes(x= PERZ, y = Freq)) +
 #strip.text.x = element_blank())
 ge
 ggsave(ge, file="einkommennachgesch.pdf")
+
+install.packages("ineq")
+library("ineq")
+ineq(wogewgesch$Freq, type="Gini")
+wogewgeschfem <- filter(wogewgesch, GESCH == "Female")
+ineq(wogewgeschfem$Freq, type="Gini")
+wogewgeschmale <- filter(wogewgesch, GESCH == "Male")
+ineq(wogewgeschmale$Freq, type="Gini")
+wogewalter56_66 <- filter(wogew, GESCH == "X", BLD =="X", ALTER == "<25", SOZST=="X")
+ineq(wogewalter56_66$Freq, type="Gini")
+
+wogewgeschX <- filter(wogewgesch, GESCH =="X")
+
+library(IC2)
+T
