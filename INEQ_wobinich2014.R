@@ -2,7 +2,7 @@
 ### WO BIN ICH IN DER VERTEILUNG
 #########################################################
 ## AUSWERTUNG FÜR derstandard.at
-## 2016/07/12
+## 2016/07/13
 ## Dr. Stefan Humer
 ## Economics of Inequality, WU Wien
 #########################################################
@@ -64,6 +64,29 @@ wobinich<-array(NA,dim=c(99,3,7,10,5,7,2,2),dimnames=list(PERZ=c(1:99),GESCH=c(u
 obs<-array(NA,dim=c(1,3,7,10,5,7,2),dimnames=list(OBS='Obs',GESCH=c(unique(lst2014$dem.gender),'X'),ALTER=c(unique(lst2014$dem.age),'X'),BLD=c(unique(lst2014$dem.region),'X'),SOZST=c(unique(lst2014$dem.sozst),'X'),EDU=c(unique(silc2014$dem.edu),'X'),BESCH=c('X','Vollzeit')))
 
 for(g in dimnames(wobinich)$GESCH) {
+  for(e in dimnames(wobinich)$EDU) {
+    
+    tmp<-silc2014
+    
+    if(g!='X') tmp<-filter(tmp, dem.gender==g)
+    if(e!='X') tmp<-filter(tmp, dem.edu==e)
+    
+    cat('processing: ',paste(g,'X X X',e))
+    
+    # alle beschäftigten
+    obs[1,g,'X','X','X',e,'X']<-nrow(tmp)
+    wobinich[,g,'X','X','X',e,'X','Emp']<-quantile(tmp$minc,seq(0.01,0.99,0.01))
+    wobinich[,g,'X','X','X',e,'X','Gew']<-Hmisc::wtd.quantile(tmp$minc,probs=seq(0.01,0.99,0.01),weights=tmp$hgew)
+    
+    cat('  | NA: ',sum(is.na(wobinich[,g,'X','X','X',e,'X','Gew'])),'\n')
+    
+    # nur vollzeit
+    tmp<- filter(tmp,vtbesch==1)
+    
+    obs[1,g,'X','X','X',e,'Vollzeit']<-nrow(tmp)
+    wobinich[,g,'X','X','X',e,'Vollzeit','Emp']<-quantile(tmp$minc,seq(0.01,0.99,0.01))
+    wobinich[,g,'X','X','X',e,'Vollzeit','Gew']<-Hmisc::wtd.quantile(tmp$minc,probs=seq(0.01,0.99,0.01),weights=tmp$hgew)
+  }
   for(a in dimnames(wobinich)$ALTER) {
     for(b in dimnames(wobinich)$BLD) {
       for(s in dimnames(wobinich)$SOZST) {
@@ -95,29 +118,6 @@ for(g in dimnames(wobinich)$GESCH) {
         
       }
     }
-  }
-  for(e in dimnames(wobinich)$EDU) {
-    
-    tmp<-silc2014
-    
-    if(g!='X') tmp<-filter(tmp, dem.gender==g)
-    if(e!='X') tmp<-filter(tmp, dem.edu==e)
-    
-    cat('processing: ',paste(g,'X X X',e))
-    
-    # alle beschäftigten
-    obs[1,g,'X','X','X',e,'X']<-nrow(tmp)
-    wobinich[,g,'X','X','X',e,'X','Emp']<-quantile(tmp$minc,seq(0.01,0.99,0.01))
-    wobinich[,g,'X','X','X',e,'X','Gew']<-Hmisc::wtd.quantile(tmp$minc,probs=seq(0.01,0.99,0.01),weights=tmp$hgew)
-    
-    cat('  | NA: ',sum(is.na(wobinich[,g,'X','X','X',e,'X','Gew'])),'\n')
-    
-    # nur vollzeit
-    tmp<- filter(tmp,vtbesch==1)
-    
-    obs[1,g,'X','X','X',e,'Vollzeit']<-nrow(tmp)
-    wobinich[,g,'X','X','X',e,'Vollzeit','Emp']<-quantile(tmp$minc,seq(0.01,0.99,0.01))
-    wobinich[,g,'X','X','X',e,'Vollzeit','Gew']<-Hmisc::wtd.quantile(tmp$minc,probs=seq(0.01,0.99,0.01),weights=tmp$hgew)
   }
 }
 
@@ -184,19 +184,34 @@ woent[i] <- lapply(woent[i], as.character)
 woent$PERZ <- as.numeric(woent$PERZ)
 wogew <- dplyr::filter(woent, TYPE=="Gew")
 
+lst2014$dem.region<-car::recode(lst2014$bl,"'1'='B';'2'='K';'3'='NOe';'4'='OOe';'5'='S';'6'='St';'7'='T';'8'='V';'9'='W'")
+#Recoden der Bundesländer und X
+
+wogew$BLD[wogew$BLD == "B"] <- "Burgenland"
+wogew$BLD[wogew$BLD == "K"] <- "Kärnten"
+wogew$BLD[wogew$BLD == "NOe"] <- "Niederösterreich"
+wogew$BLD[wogew$BLD == "OOe"] <- "Oberösterreich"
+wogew$BLD[wogew$BLD == "S"] <- "Salzburg"
+wogew$BLD[wogew$BLD == "St"] <- "Steiermark"
+wogew$BLD[wogew$BLD == "T"] <- "Tirol"
+wogew$BLD[wogew$BLD == "V"] <- "Vorarlberg"
+wogew$BLD[wogew$BLD == "W"] <- "Wien"
+
+wogew[ wogew == "X" ] <- "Alle"
+
 alle <- dplyr::filter(woent, GESCH == "X", ALTER == "X", BLD == "X", SOZST == "X", TYPE=="Gew")
 
 options(scipen = 999)
 
 
-wogewbdl <- filter(wogew, SOZST == "X") # Filter für alle außer Sozst
-wogewsoz <- filter(wogew, BLD =="X") #FILTER FÜR ALLE AUSSER BUNDESLÄNDER
-wogewalter<-filter(wogew, BLD =="X", SOZST=="X", GESCH=="X", BESCH=="X", EDU=="X") #FACET FÜR ALTER ANSEHEN
-wogewsozalter<-filter(wogew, BLD =="X", GESCH=="X", ALTER == "X", BESCH=="X", EDU=="X") #FACET FÜR SOZSTELL ANSEHEN
-wogewbdl <- filter(wogew, GESCH=="X", ALTER == "X", SOZST=="X", BESCH=="X", EDU=="X") #FACET FÜR BDL ANSEHEN
-wogewgesch <- filter(wogew, BLD =="X", ALTER == "X", SOZST=="X", BESCH=="X", EDU=="X") #FACET FÜR GESCHLECHT ANSEHEN
-wogewgeschvollzeit <- filter(wogew, BLD =="X", ALTER == "X", SOZST=="X", BESCH=="Vollzeit", EDU=="X") #FACET FÜR GESCHLECHT ANSEHEN
-wogewalle <- filter(wogew, BLD =="X", ALTER == "X", SOZST=="X", GESCH=="X", BESCH=="X", EDU=="X")
+wogewbdl <- filter(wogew, SOZST == "Alle") # Filter für alle außer Sozst
+wogewsoz <- filter(wogew, BLD =="Alle") #FILTER FÜR ALLE AUSSER BUNDESLÄNDER
+wogewalter<-filter(wogew, BLD =="Alle", SOZST=="Alle", GESCH=="Alle", BESCH=="Alle", EDU=="Alle") #FACET FÜR ALTER ANSEHEN
+wogewsozalter<-filter(wogew, BLD =="Alle", GESCH=="Alle", ALTER == "Alle", BESCH=="Alle", EDU=="Alle") #FACET FÜR SOZSTELL ANSEHEN
+wogewbdl <- filter(wogew, GESCH=="Alle", ALTER == "Alle", SOZST=="Alle", BESCH=="Alle", EDU=="Alle") #FACET FÜR BDL ANSEHEN
+wogewgesch <- filter(wogew, BLD =="Alle", ALTER == "Alle", SOZST=="Alle", BESCH=="Alle", EDU=="Alle") #FACET FÜR GESCHLECHT ANSEHEN
+wogewgeschvollzeit <- filter(wogew, BLD =="Alle", ALTER == "Alle", SOZST=="Alle", BESCH=="Vollzeit", EDU=="Alle") #FACET FÜR GESCHLECHT ANSEHEN
+wogewalle <- filter(wogew, BLD =="Alle", ALTER == "Alle", SOZST=="Alle", GESCH=="Alle", BESCH=="Alle", EDU=="Alle")
 wogewbildvolz <- filter(alle, BESCH=="Vollzeit") #
 
 #Alle Verteilungen nach Bildung
@@ -246,12 +261,15 @@ ge
 ggsave(ge, file="einkommennachgesch.pdf")
 
 #Alle Verteilungen nach Geschlecht mit Vollzeit-Beschäftigten
-ge <- ggplot(wogewgeschvollzeit, aes(x= PERZ, y = Freq)) +
-  geom_bar(stat="identity") +
-  facet_wrap(~ GESCH)+
+gev <- ggplot(wogewgeschvollzeit, aes(x= PERZ, y= Freq, group=GESCH, colour=GESCH, fill=GESCH)) +
+  geom_step(stat="identity") +
+  #facet_wrap(~ GESCH)+
   ylim(0,15000)+
-  theme#(strip.background = element_blank(),
-#strip.text.x = element_blank())
-ge
-ggsave(ge, file="einkommennachgesch.pdf")
+  scale_colour_manual(values = c("blue", "pink", "black")) +
+  theme
+  gev
+ 
+   #(strip.background = element_blank(),
+  #strip.text.x = element_blank())
+ggsave(gev, file="einkommennachgesch.pdf")
 
